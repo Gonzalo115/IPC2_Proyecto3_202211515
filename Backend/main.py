@@ -66,24 +66,23 @@ def process_xml():
             ET.SubElement(sentimientos_p, "palabra").text = objPositiva['Palabra']
             PALABRAS_POSITIVAS += 1
 
+
     sentimientos_negativos = root.find('sentimientos_negativos')
 
-
     for palabraN in sentimientos_negativos.findall('palabra'):
+        repetida = False
         palabra = palabraN.text
         objNegativa = {
             'Palabra': palabra
         }
 
-
-        #Agregar la palabra Negativa
+        #Validar si ya existe
         for c in sentimientos_p.findall('palabra'):
             word = c.text
             if word == objNegativa['Palabra']:
                 PALABRAS_NEGATIVAS_RECHAZADA += 1
                 repetida = True
                 break
-
         for c in sentimientos_n.findall('palabra'):
             word = c.text
             if word == objNegativa['Palabra']:
@@ -91,6 +90,7 @@ def process_xml():
                 repetida = True
                 break
 
+        #Agregar la palabra Negativa 
         if repetida == False:
             ET.SubElement(sentimientos_n, "palabra").text = objNegativa['Palabra']
             PALABRAS_NEGATIVAS +=1
@@ -98,8 +98,6 @@ def process_xml():
     # Guardar XML
     tree = ET.ElementTree(diccionario)
     tree.write(XML_Palabras)
-
-
 
     #Respuesta 
     response_content = """<?xml version="1.0" encoding="UTF-8"?>
