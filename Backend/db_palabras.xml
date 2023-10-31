@@ -1,1 +1,16 @@
-<diccionario><sentimientos_positivos><palabra> adios </palabra><palabra> hola </palabra></sentimientos_positivos><sentimientos_negativos><palabra> no </palabra><palabra> norte </palabra><palabra> yes </palabra></sentimientos_negativos></diccionario>
+<diccionario>
+    <sentimientos_positivos>
+        <palabra>bueno</palabra>
+        <palabra>excelente</palabra>
+        <palabra>cool</palabra>
+        <palabra>satisfecho</palabra>
+    <palabra>malos</palabra></sentimientos_positivos>
+    <sentimientos_negativos>
+        <palabra>malo</palabra>
+        <palabra>pésimo</palabra>
+        <palabra>triste</palabra>
+        <palabra>molesto</palabra>
+        <palabra>decepcionado</palabra>
+        <palabra>enojo</palabra>
+    </sentimientos_negativos>
+</diccionario>
