@@ -3,6 +3,8 @@ from xml.etree import ElementTree as ET
 import re
 import os
 
+from fechastem import fechastem
+
 app = Flask(__name__)
 
 
@@ -148,6 +150,8 @@ def process_xml2():
     xml_data = request.data
     root = ET.fromstring(xml_data)
 
+    Fechas = []
+
     # Cargar XML existente
     if os.path.exists(XML_Mensajes):
         tree = ET.parse(XML_Mensajes)
@@ -156,19 +160,35 @@ def process_xml2():
         MENSAJES = ET.Element("MENSAJES")
 
 
-
-
     for mensaje in root.findall('MENSAJE'):
         fecha = mensaje.find('FECHA').text.strip()
         texto = mensaje.find('TEXTO').text.strip()
-        print(fecha.split(" "))
-        fecha = fecha.split(" ")[1]
+        texto = texto.lower()
+
+        #abstraer la fecha de la forma de dd/mm/yyyy de la fecha
+        patron_fecha = r'\d{2}/\d{2}/\d{4}'
+        fechas = re.findall(patron_fecha, fecha)
+
+        #Si no cumple esta parte enctonces se continua con la siguiente fecha
+        if len(fechas) == 0:
+            continue
+
+        fecha = fechas[0]
 
         objMensaje = {
             'fecha': fecha,
             'texto': texto
-        }     
-        
+        }
+
+
+        LISTA_USR_MENCIONADOS_temp = []
+        LISTA_HASH_INCLUIDOS_temp = []
+        LISTA_Palabras_INCLUIDOS_temp = []
+
+        analizador(texto, LISTA_USR_MENCIONADOS_temp, LISTA_HASH_INCLUIDOS_temp, LISTA_Palabras_INCLUIDOS_temp)
+
+        Fechas.append(fechastem(fecha, LISTA_USR_MENCIONADOS_temp, LISTA_HASH_INCLUIDOS_temp))
+  
         mensaje = ET.SubElement(MENSAJES, "MENSAJES")
         ET.SubElement(mensaje, "nombre").text = objMensaje['fecha']
         ET.SubElement(mensaje, "texto").text = objMensaje['texto']
@@ -178,14 +198,149 @@ def process_xml2():
     tree.write(XML_Mensajes, encoding="utf-8") 
 
 
-    response_content = """<?xml version="1.0" encoding="UTF-8"?>
-<response>
-    <message>Datos procesados correctamente</message>
-</response>"""
-    
-    return Response(response_content, content_type='application/xml; charset=utf-8')
-        
+    elementos_procesados = set()
 
+    FechasAgrupadas = []
+
+
+    for i in range(len(Fechas)):
+        fencha1 = Fechas[i]
+
+        if fencha1 not in elementos_procesados:
+            fecha = []
+            NumeroMensajes = 1
+            fencha11 = Fechas[i].fecha
+            conjunto1_mensiones = set(Fechas[i].LISTA_USR_MENCIONADOS)
+            conjunto1_hast = set(Fechas[i].LISTA_HASH_INCLUIDOS)
+
+            for j in range(i + 1, len(Fechas)):
+                fencha2 = Fechas[j]
+                if fencha2 not in elementos_procesados:
+                    fencha22 = Fechas[j].fecha
+                    conjunto2_mensiones = set(Fechas[j].LISTA_USR_MENCIONADOS)
+                    conjunto2_hast = set(Fechas[j].LISTA_HASH_INCLUIDOS)
+                    if fencha11 == fencha22:
+                        print(f"Elemento {fencha1} es igual a Elemento {fencha2}")
+                        conjunto1_mensiones = conjunto1_mensiones | conjunto2_mensiones
+                        conjunto1_hast = conjunto1_hast | conjunto2_hast
+                        elementos_procesados.add(fencha2)
+                        NumeroMensajes += 1
+
+            listamesiones = list(conjunto1_mensiones)
+            listaconjuntos = list(conjunto1_hast)
+
+            fecha.append(str(fencha11))
+            fecha.append(str(NumeroMensajes))
+            fecha.append(str(len(listamesiones)))
+            fecha.append(str(len(listaconjuntos)))
+            FechasAgrupadas.append(fecha)
+            elementos_procesados.add(fencha1)
+
+    
+    print(FechasAgrupadas)
+
+    MENSAJES_RECIBIDOS = ET.Element("MENSAJES_RECIBIDOS")
+    for elemento_data in FechasAgrupadas:
+        tiempo = ET.SubElement(MENSAJES_RECIBIDOS, "TIEMPO")
+        etiquetas = ["FECHA", "MSJ_RECIBIDOS", "USR_MENCIONADOS", "HASH_INCLUIDOS"]
+        
+        for etiqueta, valor in zip(etiquetas, elemento_data):
+            etiqueta_elemento = ET.SubElement(tiempo, etiqueta)
+            etiqueta_elemento.text = valor
+
+    # Crear un objeto ElementTree a partir de la raíz
+    tree = ET.ElementTree(MENSAJES_RECIBIDOS)
+
+    # Generar el XML como una cadena
+    xml_string = ET.tostring(MENSAJES_RECIBIDOS, encoding="utf-8").decode()
+
+    # Retornar el XML como una respuesta HTTP
+    return Response(xml_string, content_type="application/xml; charset=utf-8")
+
+def isCaracterValido(ascii):
+    if 65 <= ascii <= 90 or 97 <= ascii <= 122:
+        return True
+    return False
+
+     
+def analizador(texto, LISTA_USR_MENCIONADOS_temp, LISTA_HASH_INCLUIDOS_temp, LISTA_Palabras_INCLUIDOS_temp):
+    estado = 0
+    lexema = ""
+
+    for caracter in texto:
+        ascii = ord(caracter)
+
+        if estado == 0:
+            if ascii == 64:
+                lexema += caracter
+                estado = 1
+            elif ascii == 35:
+                lexema += caracter
+                estado = 2
+            elif ascii == 32:
+                estado = 0
+                pass
+            else:
+                lexema += caracter
+                estado = 3
+
+        elif estado == 1:
+            if caracter.isdigit() or isCaracterValido(ascii) or ascii == 95:
+                lexema += caracter
+            else:
+                LISTA_USR_MENCIONADOS_temp.append(lexema)
+                lexema = ""
+                if ascii == 64:
+                    lexema += caracter
+                    estado = 1
+                elif ascii == 35:
+                    lexema += caracter
+                    estado = 2
+                elif ascii == 32:
+                    estado = 0
+                    pass
+                else:
+                    lexema += caracter
+                    estado = 3
+
+        elif estado == 2:
+            if ascii != 35:
+                lexema += caracter
+            else:
+                lexema += caracter
+                LISTA_HASH_INCLUIDOS_temp.append(lexema)
+                lexema = ""
+                if ascii == 64:
+                    lexema += caracter
+                    estado = 1
+                elif ascii == 35:
+                    lexema += caracter
+                    estado = 2
+                elif ascii == 32:
+                    estado = 0
+                    pass
+                else:
+                    lexema += caracter
+                    estado = 3
+
+        elif estado == 3:
+            if ascii != 32:
+                lexema += caracter
+            else:
+                LISTA_Palabras_INCLUIDOS_temp.append(lexema)
+                lexema = ""
+                if ascii == 64:
+                    lexema += caracter
+                    estado = 1
+                elif ascii == 35:
+                    lexema += caracter
+                    estado = 2
+                elif ascii == 32:
+                    estado = 0
+                    pass
+                else:
+                    lexema += caracter
+                    estado = 3
 
 
 if __name__ == '__main__':
