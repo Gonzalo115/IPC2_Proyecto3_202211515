@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, Response
 from xml.etree import ElementTree as ET
 import re
 import os
-
+import xml.dom.minidom
 from fechastem import fechastem
 
 app = Flask(__name__)
@@ -19,7 +19,10 @@ def index():
 #/process
 @app.route('/processWords', methods=['POST'])
 def process_xml():
-    xml_data = request.data
+    xml_data = request.data.decode('utf-8')
+    if not xml_data.endswith('</diccionario>'):
+        xml_data += '>'
+
     root = ET.fromstring(xml_data)
     PALABRAS_POSITIVAS = 0
     PALABRAS_POSITIVAS_RECHAZADA = 0
@@ -44,7 +47,6 @@ def process_xml():
         repetida = False
         palabra = palabraP.text.strip()
         palabra = palabra.lower()
-        print(palabra)
         objPositiva = {
             'Palabra': palabra
         }
@@ -83,13 +85,14 @@ def process_xml():
         #Validar si ya existe
         for c in sentimientos_p.findall('palabra'):
             word = c.text
-            if word == objNegativa['Palabra'] or son_iguales_con_o_sin_tildes(word, objPositiva['Palabra']):
+            if word == objNegativa['Palabra'] or son_iguales_con_o_sin_tildes(word, objNegativa['Palabra']):
                 PALABRAS_NEGATIVAS_RECHAZADA += 1
                 repetida = True
                 break
+
         for c in sentimientos_n.findall('palabra') :
             word = c.text
-            if word == objNegativa['Palabra'] or son_iguales_con_o_sin_tildes(word, objPositiva['Palabra']):
+            if word == objNegativa['Palabra'] or son_iguales_con_o_sin_tildes(word, objNegativa['Palabra']):
                 PALABRAS_NEGATIVAS_RECHAZADA += 1
                 repetida = True
                 break
@@ -112,7 +115,7 @@ def process_xml():
     <PALABRAS_NEGATIVAS_RECHAZADA>{}</PALABRAS_NEGATIVAS_RECHAZADA>
 </response>""".format(PALABRAS_POSITIVAS, PALABRAS_POSITIVAS_RECHAZADA, PALABRAS_NEGATIVAS, PALABRAS_NEGATIVAS_RECHAZADA)
     
-    return Response(response_content, content_type='application/xml; charset=utf-8')
+    return Response(response_content, content_type='application/xml; charset=utf-8'), 200
 
 
 def quitar_tildes(palabra):
@@ -141,13 +144,15 @@ def son_iguales_con_o_sin_tildes(palabra1, palabra2):
     palabra1_sin_tilde = quitar_tildes(palabra1)
     palabra2_sin_tilde = quitar_tildes(palabra2)
 
-    return palabra1_sin_tilde == palabra2_sin_tilde
+    return palabra1_sin_tilde == palabra2_sin_tilde 
 
 
 
 @app.route('/processMessage', methods=['POST'])
 def process_xml2():
-    xml_data = request.data
+    xml_data = request.data.decode('utf-8')
+    if not xml_data.endswith('</MENSAJES>'):
+        xml_data += 'S>'
     root = ET.fromstring(xml_data)
 
     Fechas = []
@@ -236,8 +241,6 @@ def process_xml2():
             FechasAgrupadas.append(fecha)
             elementos_procesados.add(fencha1)
 
-    
-    print(FechasAgrupadas)
 
     MENSAJES_RECIBIDOS = ET.Element("MENSAJES_RECIBIDOS")
     for elemento_data in FechasAgrupadas:
@@ -254,8 +257,16 @@ def process_xml2():
     # Generar el XML como una cadena
     xml_string = ET.tostring(MENSAJES_RECIBIDOS, encoding="utf-8").decode()
 
+
+    # Parsear la cadena XML
+    dom = xml.dom.minidom.parseString(xml_string)
+
+    # Dar formato al XML
+    formatted_xml = dom.toprettyxml()
+
+
     # Retornar el XML como una respuesta HTTP
-    return Response(xml_string, content_type="application/xml; charset=utf-8")
+    return Response(formatted_xml, content_type="application/xml; charset=utf-8")
 
 def isCaracterValido(ascii):
     if 65 <= ascii <= 90 or 97 <= ascii <= 122:

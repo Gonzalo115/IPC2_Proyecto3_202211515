@@ -1,0 +1,78 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <title>Este es el frontend en Django</title>
+
+    <style>
+      /* Estilos personalizados para la barra de navegación */
+      .navbar {
+        border-bottom: 1px solid #e5e5e5; /* Añade una línea en la parte inferior de la barra de navegación */
+      }
+      .nav-item a {
+        margin-right: 15px; /* Añade un margen a la derecha de cada enlace */
+      }
+      .navbar-brand {
+        font-weight: bold; /* Hace el título de la app (Mi App) en negritas */
+      }
+
+
+    </style>
+  </head>
+
+  <header>
+    <!-- Barra de navegación -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <a class="navbar-brand" href="#">PROYECTO 3</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-toggle="collapse"
+        data-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <!-- <li class="nav-item">
+            <a class="nav-link" href="/add">Agregar</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/list">Listar</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/stats">Estadísticas</a>
+          </li> -->
+          <li class="nav-item">
+            <a class="nav-link" href="/palabra">Cargar Palabras</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/mensaje">Cargar Mensajes</a>
+          </li>
+          <!-- Puedes agregar más elementos de navegación aquí -->
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Bootstrap JS y dependencias -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </header>
+
+  <main role="main">{% block content %}{% endblock %}</main>
+  {% block extra_js %}{% endblock %}
+</html>
