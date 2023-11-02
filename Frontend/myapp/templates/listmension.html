@@ -1,0 +1,46 @@
+{% extends "index.html" %} {% block content %}
+
+<div class="container mt-4">
+  <h2>Tabla de Datos</h2>
+
+  <!-- Formulario de búsqueda -->
+  <div class="mb-3">
+    <form action="" method="get">
+      <div class="input-group">
+        <input
+          type="date"
+          class="form-control"
+          placeholder="Buscar por Fecha..."
+          name="inputSearch"
+        />
+        <div class="input-group-append">
+          <button class="btn btn-outline-secondary" type="submit">
+            {% if query %} Resetear busqueda {% else %} Buscar {% endif %}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Tabla -->
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Mensiones</th>
+        <th>no_Mensiones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for hashtag in hashtags %}
+      <tr>
+        <td>{{ hashtag.fecha }}</td>
+        <td>{{ hashtag.mension }}</td>
+        <td>{{ hashtag.numero }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock content %}

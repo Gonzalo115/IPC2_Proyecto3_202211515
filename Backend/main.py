@@ -4,6 +4,8 @@ import re
 import os
 import xml.dom.minidom
 from fechastem import fechastem
+from datetime import datetime
+from collections import defaultdict
 
 app = Flask(__name__)
 
@@ -180,6 +182,9 @@ def process_xml2():
 
         fecha = fechas[0]
 
+        fecha_obj = datetime.strptime(fecha, "%d/%m/%Y")
+        fecha = fecha_obj.strftime("%d-%m-%Y")
+
         objMensaje = {
             'fecha': fecha,
             'texto': texto
@@ -194,9 +199,9 @@ def process_xml2():
 
         Fechas.append(fechastem(fecha, LISTA_USR_MENCIONADOS_temp, LISTA_HASH_INCLUIDOS_temp))
   
-        mensaje = ET.SubElement(MENSAJES, "MENSAJES")
-        ET.SubElement(mensaje, "nombre").text = objMensaje['fecha']
-        ET.SubElement(mensaje, "texto").text = objMensaje['texto']
+        mensaje = ET.SubElement(MENSAJES, "MENSAJE")
+        ET.SubElement(mensaje, "FECHA").text = objMensaje['fecha']
+        ET.SubElement(mensaje, "TEXTO").text = objMensaje['texto']
         
 
     tree = ET.ElementTree(MENSAJES)
@@ -225,7 +230,6 @@ def process_xml2():
                     conjunto2_mensiones = set(Fechas[j].LISTA_USR_MENCIONADOS)
                     conjunto2_hast = set(Fechas[j].LISTA_HASH_INCLUIDOS)
                     if fencha11 == fencha22:
-                        print(f"Elemento {fencha1} es igual a Elemento {fencha2}")
                         conjunto1_mensiones = conjunto1_mensiones | conjunto2_mensiones
                         conjunto1_hast = conjunto1_hast | conjunto2_hast
                         elementos_procesados.add(fencha2)
@@ -276,20 +280,24 @@ def isCaracterValido(ascii):
      
 def analizador(texto, LISTA_USR_MENCIONADOS_temp, LISTA_HASH_INCLUIDOS_temp, LISTA_Palabras_INCLUIDOS_temp):
     estado = 0
+    estado_anterior = 0
     lexema = ""
-
     for caracter in texto:
+
         ascii = ord(caracter)
 
         if estado == 0:
             if ascii == 64:
                 lexema += caracter
                 estado = 1
+                estado_anterior = 0
             elif ascii == 35:
                 lexema += caracter
                 estado = 2
+                estado_anterior = 0
             elif ascii == 32:
                 estado = 0
+                estado_anterior = 0
                 pass
             else:
                 lexema += caracter
@@ -298,61 +306,196 @@ def analizador(texto, LISTA_USR_MENCIONADOS_temp, LISTA_HASH_INCLUIDOS_temp, LIS
         elif estado == 1:
             if caracter.isdigit() or isCaracterValido(ascii) or ascii == 95:
                 lexema += caracter
+                estado_anterior = 1
             else:
-                LISTA_USR_MENCIONADOS_temp.append(lexema)
-                lexema = ""
-                if ascii == 64:
-                    lexema += caracter
-                    estado = 1
-                elif ascii == 35:
-                    lexema += caracter
-                    estado = 2
-                elif ascii == 32:
-                    estado = 0
-                    pass
-                else:
-                    lexema += caracter
-                    estado = 3
+                estado = 4
+                estado_anterior = 1
+
 
         elif estado == 2:
             if ascii != 35:
                 lexema += caracter
+                estado_anterior = 2
             else:
                 lexema += caracter
-                LISTA_HASH_INCLUIDOS_temp.append(lexema)
-                lexema = ""
-                if ascii == 64:
-                    lexema += caracter
-                    estado = 1
-                elif ascii == 35:
-                    lexema += caracter
-                    estado = 2
-                elif ascii == 32:
-                    estado = 0
-                    pass
-                else:
-                    lexema += caracter
-                    estado = 3
+                estado = 4
+                estado_anterior = 2
+
 
         elif estado == 3:
             if ascii != 32:
                 lexema += caracter
+                estado_anterior = 3
             else:
-                LISTA_Palabras_INCLUIDOS_temp.append(lexema)
-                lexema = ""
-                if ascii == 64:
-                    lexema += caracter
-                    estado = 1
-                elif ascii == 35:
-                    lexema += caracter
-                    estado = 2
-                elif ascii == 32:
-                    estado = 0
-                    pass
-                else:
-                    lexema += caracter
-                    estado = 3
+                estado = 4
+                estado_anterior = 3
 
+
+        elif estado == 4:
+
+            if estado_anterior == 1:
+                LISTA_USR_MENCIONADOS_temp.append(lexema)            
+            elif estado_anterior == 2:
+                LISTA_HASH_INCLUIDOS_temp.append(lexema)
+            elif estado_anterior == 3:
+                LISTA_Palabras_INCLUIDOS_temp.append(lexema)
+
+            lexema = ""
+            if ascii == 64:
+                lexema += caracter
+                estado = 1
+                estado_anterior = 0
+            elif ascii == 35:
+                lexema += caracter
+                estado = 2
+                estado_anterior = 0
+            elif ascii == 32:
+                estado = 0
+                estado_anterior = 0
+                pass
+            else:
+                lexema += caracter
+                estado = 3
+                estado_anterior = 0
+
+
+    if estado != 0:
+        if estado_anterior == 1:
+            LISTA_USR_MENCIONADOS_temp.append(lexema)
+        elif estado_anterior == 2:
+            LISTA_HASH_INCLUIDOS_temp.append(lexema)
+        elif estado_anterior == 3:
+            LISTA_Palabras_INCLUIDOS_temp.append(lexema)
+
+
+@app.route('/search-by-date-hashtags/<fecha>', methods=['GET'])
+def search_by_hashtags(fecha):
+
+    fechas = fecha.split("-")
+    dia = fechas[2]
+    mes = fechas[1]
+    ano = fechas[0]
+    fecha = f'{dia}-{mes}-{ano}'
+
+    if not os.path.exists(XML_Mensajes):
+        return None
+
+    # Cargar XML existente
+
+    tree = ET.parse(XML_Mensajes)
+    MENSAJES = tree.getroot()
+
+    list_Hashtags = []
+
+    for data in tree.findall('MENSAJE'):
+        fecha_bd = data.find('FECHA').text
+        texto_bd = data.find('TEXTO').text
+        if fecha == fecha_bd:
+            LISTA_USR_MENCIONADOS_temp = []
+            LISTA_HASH_INCLUIDOS_temp = []
+            LISTA_Palabras_INCLUIDOS_temp = []
+            analizador(texto_bd, LISTA_USR_MENCIONADOS_temp, LISTA_HASH_INCLUIDOS_temp, LISTA_Palabras_INCLUIDOS_temp)
+            for hash in LISTA_HASH_INCLUIDOS_temp:
+                list_Hashtags.append(hash)
+
+
+    result_list = []
+    elementos_procesados = set()
+
+    for i in range(len(list_Hashtags)):
+        no_hashtag = 1
+        hashtag1 = list_Hashtags[i]
+        if hashtag1 not in elementos_procesados:
+            for j in range(i + 1, len(list_Hashtags)):
+                hashtag2 = list_Hashtags[j]
+                if hashtag2 not in elementos_procesados:
+                    if hashtag1 == hashtag2:
+                        no_hashtag += 1
+                        elementos_procesados.add(hashtag2)
+            elementos_procesados.add(hashtag1)
+
+            obj = {
+                'fecha': fecha,
+                'hashtags': hashtag1,
+                'numero': no_hashtag,
+            }
+
+            # Usamos el alias como clave
+            result_list.append(obj)
+
+    return jsonify(result_list)
+
+
+
+@app.route('/search-by-date-mentions/<fecha>', methods=['GET'])
+def search_by_mentions(fecha):
+    fechas = fecha.split("-")
+    dia = fechas[2]
+    mes = fechas[1]
+    ano = fechas[0]
+    fecha = f'{dia}-{mes}-{ano}'
+
+    if not os.path.exists(XML_Mensajes):
+        return None
+
+    # Cargar XML existente
+
+    tree = ET.parse(XML_Mensajes)
+    MENSAJES = tree.getroot()
+
+    list_mensiones = []
+
+    for data in tree.findall('MENSAJE'):
+        fecha_bd = data.find('FECHA').text
+        texto_bd = data.find('TEXTO').text
+        if fecha == fecha_bd:
+            LISTA_USR_MENCIONADOS_temp = []
+            LISTA_HASH_INCLUIDOS_temp = []
+            LISTA_Palabras_INCLUIDOS_temp = []
+            analizador(texto_bd, LISTA_USR_MENCIONADOS_temp, LISTA_HASH_INCLUIDOS_temp, LISTA_Palabras_INCLUIDOS_temp)
+            for user in LISTA_USR_MENCIONADOS_temp:
+                list_mensiones.append(user)
+
+
+    result_list = []
+    elementos_procesados = set()
+
+    for i in range(len(list_mensiones)):
+        no_mensiones = 1
+        mension1 = list_mensiones[i]
+        if mension1 not in elementos_procesados:
+            for j in range(i + 1, len(list_mensiones)):
+                mension2 = list_mensiones[j]
+                if mension2 not in elementos_procesados:
+                    if mension1 == mension2:
+                        no_mensiones += 1
+                        elementos_procesados.add(mension2)
+            elementos_procesados.add(mension1)
+
+            obj = {
+                'fecha': fecha,
+                'mension': mension1,
+                'numero': no_mensiones,
+            }
+
+            # Usamos el alias como clave
+            result_list.append(obj)
+
+    return jsonify(result_list)
+
+
+@app.route('/search-by-date-feelings/<fecha>', methods=['GET'])
+def search_by_feelings(fecha):
+    if not os.path.exists(XML_Mensajes):
+        return None
+    return None
+
+
+@app.route('/lista', methods=['GET'])
+def search_by_vacio():
+    if not os.path.exists(XML_Mensajes):
+        return None
+    return None
 
 if __name__ == '__main__':
     app.run(debug=True)

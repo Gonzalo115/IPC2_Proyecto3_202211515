@@ -8,11 +8,18 @@
     <form action="" method="get">
       <div class="input-group">
         <input
-          type="text"
+          type="date"
           class="form-control"
-          placeholder="Buscar por alias..."
+          placeholder="Buscar por Fecha Inicio..."
           name="inputSearch"
         />
+        <!-- <div class="input-group">
+          <input
+            type="date"
+            class="form-control"
+            placeholder="Buscar por Fecha Fin..."
+            name="inputSearch2"
+          /> -->
         <div class="input-group-append">
           <button class="btn btn-outline-secondary" type="submit">
             {% if query %} Resetear busqueda {% else %} Buscar {% endif %}
@@ -26,19 +33,17 @@
   <table class="table table-bordered">
     <thead>
       <tr>
-        <th>Nombre</th>
-        <th>Alias</th>
-        <th>Correo</th>
-        <th>Correo Válido</th>
+        <th>Fecha</th>
+        <th>Hashtags</th>
+        <th>No_Repetidas</th>
       </tr>
     </thead>
     <tbody>
-      {% for persona in personas %}
+      {% for hashtag in hashtags %}
       <tr>
-        <td>{{ persona.nombre }}</td>
-        <td>{{ persona.alias }}</td>
-        <td>{{ persona.correo }}</td>
-        <td>{{ persona.correoValido }}</td>
+        <td>{{ hashtag.fecha }}</td>
+        <td>{{ hashtag.hashtags }}</td>
+        <td>{{ hashtag.numero }}</td>
       </tr>
       {% endfor %}
     </tbody>

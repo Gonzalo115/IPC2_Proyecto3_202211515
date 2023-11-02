@@ -62,30 +62,80 @@ def stats(request):
 
 
 
-def list(request):
+def listhast(request):
     query = request.GET.get('inputSearch')
-    
+    print(query)
     contexto = {
-        'personas': [],
+        'hashtags': [],
         'query': query
     }
 
     # Comprobar si hay una búsqueda
     if query:
         # Si hay un término de búsqueda, buscar por alias
-        response = requests.get(url + f"/search-by-alias/{query}")
+        response = requests.get(url + f"/search-by-date-hashtags/{query}")
     else:
         # Si no hay término de búsqueda, obtener todos los datos
-        response = requests.get(url + "/get-data")
+        response = requests.get(url + "/lista")
 
     if response.status_code == 200:
-        contexto['personas'] = response.json()
+        contexto['hashtags'] = response.json()
     else:
         # Puedes manejar errores específicos aquí si lo deseas
         pass  # O quizás mostrar un mensaje de error
 
-    return render(request, "list.html", contexto)
+    return render(request, "listhast.html", contexto)
 
+
+def listmension(request):
+    query = request.GET.get('inputSearch')
+    contexto = {
+        'hashtags': [],
+        'query': query
+    }
+
+    # Comprobar si hay una búsqueda
+    if query:
+        # Si hay un término de búsqueda, buscar por alias
+        response = requests.get(url + f"/search-by-date-mentions/{query}")
+    else:
+        # Si no hay término de búsqueda, obtener todos los datos
+        response = requests.get(url + "/lista")
+
+    if response.status_code == 200:
+        contexto['hashtags'] = response.json()
+    else:
+        # Puedes manejar errores específicos aquí si lo deseas
+        pass  # O quizás mostrar un mensaje de error
+
+    return render(request, "listmension.html", contexto)
+
+
+def listmensaje(request):
+    query1 = request.GET.get('inputSearch')
+    query2 = request.GET.get('inputSearch2')
+    query = f'{query1}-{query2}'
+    query = request.GET.get('inputSearch')
+    contexto = {
+        'hashtags': [],
+        'query': query
+    }
+
+    # Comprobar si hay una búsqueda
+    if query:
+        # Si hay un término de búsqueda, buscar por alias
+        response = requests.get(url + f"/search-by-date-mentions/{query}")
+    else:
+        # Si no hay término de búsqueda, obtener todos los datos
+        response = requests.get(url + "/lista")
+
+    if response.status_code == 200:
+        contexto['hashtags'] = response.json()
+    else:
+        # Puedes manejar errores específicos aquí si lo deseas
+        pass  # O quizás mostrar un mensaje de error
+
+    return render(request, "listmension.html", contexto)
 
 
 def palabra(request):
