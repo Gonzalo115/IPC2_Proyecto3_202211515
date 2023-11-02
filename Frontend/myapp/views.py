@@ -15,6 +15,9 @@ url = "http://localhost:5000"
 def index(request):
     return render(request, "index.html")
 
+def help(request):
+    return render(request, "help.html")
+
 def add(request):
     if request.method == "POST":
         # Recoger datos del formulario
@@ -111,31 +114,32 @@ def listmension(request):
     return render(request, "listmension.html", contexto)
 
 
-def listmensaje(request):
+def listfeelings(request):
     query1 = request.GET.get('inputSearch')
     query2 = request.GET.get('inputSearch2')
     query = f'{query1}-{query2}'
-    query = request.GET.get('inputSearch')
+    print(query)
+
     contexto = {
-        'hashtags': [],
+        'feelings': [],
         'query': query
     }
 
     # Comprobar si hay una búsqueda
     if query:
         # Si hay un término de búsqueda, buscar por alias
-        response = requests.get(url + f"/search-by-date-mentions/{query}")
+        response = requests.get(url + f"/search-by-date-feelings/{query}")
     else:
         # Si no hay término de búsqueda, obtener todos los datos
         response = requests.get(url + "/lista")
 
     if response.status_code == 200:
-        contexto['hashtags'] = response.json()
+        contexto['feelings'] = response.json()
     else:
         # Puedes manejar errores específicos aquí si lo deseas
         pass  # O quizás mostrar un mensaje de error
 
-    return render(request, "listmension.html", contexto)
+    return render(request, "listfeelings.html", contexto)
 
 
 def palabra(request):

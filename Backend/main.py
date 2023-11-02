@@ -4,6 +4,7 @@ import re
 import os
 import xml.dom.minidom
 from fechastem import fechastem
+from Sentimiento import Sentimiento
 from datetime import datetime
 from collections import defaultdict
 
@@ -486,9 +487,134 @@ def search_by_mentions(fecha):
 
 @app.route('/search-by-date-feelings/<fecha>', methods=['GET'])
 def search_by_feelings(fecha):
+
+    fechas = fecha.split("-")
+    diaI = fechas[2]
+    mesI = fechas[1]
+    anoI = fechas[0]
+    fecha_inicio = datetime(int(anoI), int(mesI), int(diaI))
+
+
+    diaF = fechas[5]
+    mesF = fechas[4]
+    anoF = fechas[3]
+    fecha_fin = datetime(int(anoF), int(mesF), int(diaF))
+
     if not os.path.exists(XML_Mensajes):
         return None
-    return None
+    
+    tree = ET.parse(XML_Mensajes)
+    MENSAJES = tree.getroot()
+
+    treeP = ET.parse(XML_Palabras)
+    diccionario = treeP.getroot()
+
+
+    fechas_en_rango = []
+
+    for data in tree.findall('MENSAJE'):
+        fecha_bd = data.find('FECHA').text
+        texto_bd = data.find('TEXTO').text
+        fechas_bd = fecha_bd.split("-")
+        dia_bd = fechas_bd[0]
+        mes_bd = fechas_bd[1]
+        ano_bd = fechas_bd[2]
+        fecha_bd_evaluar = datetime(int(ano_bd), int(mes_bd), int(dia_bd))
+        if fecha_inicio <= fecha_bd_evaluar <= fecha_fin:
+            LISTA_USR_MENCIONADOS_temp = []
+            LISTA_HASH_INCLUIDOS_temp = []
+            LISTA_Palabras_INCLUIDOS_temp = [] #Este nos interesa...
+            analizador(texto_bd, LISTA_USR_MENCIONADOS_temp, LISTA_HASH_INCLUIDOS_temp, LISTA_Palabras_INCLUIDOS_temp)
+
+            sentimientos_positivos = treeP.find('sentimientos_positivos')
+            list_palabras_positivas = []
+            for palabra in sentimientos_positivos.findall('palabra'):
+                list_palabras_positivas.append(palabra.text)
+
+
+            sentimientos_negativos = treeP.find('sentimientos_negativos')
+            list_palabras_negativas = []
+            for palabra in sentimientos_negativos.findall('palabra'):
+                list_palabras_negativas.append(palabra.text)  
+
+
+            #Contar las palabras positivas
+            palabras_positivas = 0
+            for palabra in LISTA_Palabras_INCLUIDOS_temp:
+                for palbraP in list_palabras_positivas:
+                    if palabra == palbraP:
+                        palabras_positivas += 1
+            
+            #Contar las palabras negativas
+            palabras_negativas = 0
+            for palabra in LISTA_Palabras_INCLUIDOS_temp:
+                for palbraN in list_palabras_negativas:
+                    if palabra == palbraN:
+                        palabras_negativas += 1
+
+
+            tipo_de_sentimiento = ""
+            if palabras_positivas > palabras_negativas:
+                tipo_de_sentimiento = "positivo"
+            elif palabras_positivas < palabras_negativas:
+                tipo_de_sentimiento = "negativo"
+            elif palabras_positivas == palabras_negativas:
+                tipo_de_sentimiento = "neutro"
+
+            
+            fechas_en_rango.append(Sentimiento(fecha_bd, tipo_de_sentimiento))
+
+
+    #termina el recorrido
+
+
+    result_list = []
+    elementos_procesados = set()
+
+    for i in range(len(fechas_en_rango)):
+        fecha1 = fechas_en_rango[i]
+        if fecha1 not in elementos_procesados:
+            sentimiento_positivo = 0
+            sentimiento_negativo = 0
+            sentimiento_neutro = 0
+            fecha_1 = fechas_en_rango[i].fecha
+            sentimiento_1 = fechas_en_rango[i].sentimiento
+
+            for j in range(i + 1, len(fechas_en_rango)):
+                fecha2 = fechas_en_rango[j]
+                if fecha2 not in elementos_procesados:
+                    fecha_2 = fechas_en_rango[j].fecha
+                    sentimiento_2 = fechas_en_rango[j].sentimiento
+                    if fecha_1 == fecha_2:
+                        if sentimiento_2 == "positivo":
+                            sentimiento_positivo += 1
+                        elif sentimiento_2 == "negativo":
+                            sentimiento_negativo += 1
+                        elif sentimiento_2 == "neutro":
+                            sentimiento_neutro += 1
+                        elementos_procesados.add(fecha2)
+            elementos_procesados.add(fecha1)
+
+            if sentimiento_1 == "positivo":
+                sentimiento_positivo += 1
+            elif sentimiento_1 == "negativo":
+                sentimiento_negativo += 1
+            elif sentimiento_1 == "neutro":
+                sentimiento_neutro += 1
+
+            obj = {
+                'fecha': fecha_1,
+                'sentimiento_positivo': sentimiento_positivo,
+                'sentimiento_negativo': sentimiento_negativo,
+                'sentimiento_neutro':   sentimiento_neutro,
+            }
+
+            # Usamos el alias como clave
+            result_list.append(obj)
+
+    return jsonify(result_list)
+
+
 
 
 @app.route('/lista', methods=['GET'])

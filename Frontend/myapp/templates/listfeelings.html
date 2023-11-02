@@ -1,7 +1,7 @@
 {% extends "index.html" %} {% block content %}
 
 <div class="container mt-4">
-  <h2>Tabla de Datos</h2>
+  <h2>Tabla de Sentimientos en Mensajes</h2>
 
   <!-- Formulario de búsqueda -->
   <div class="mb-3">
@@ -34,16 +34,18 @@
     <thead>
       <tr>
         <th>Fecha</th>
-        <th>Hashtags</th>
-        <th>No_Repetidas</th>
+        <th>Mensajes con sentimiento positivo</th>
+        <th>Mensajes con sentimiento negativo</th>
+        <th>Mensajes neutros</th>
       </tr>
     </thead>
     <tbody>
-      {% for hashtag in hashtags %}
+      {% for feelings in feelings %}
       <tr>
-        <td>{{ hashtag.fecha }}</td>
-        <td>{{ hashtag.hashtags }}</td>
-        <td>{{ hashtag.numero }}</td>
+        <td>{{ feelings.fecha }}</td>
+        <td>{{ feelings.sentimiento_positivo }}</td>
+        <td>{{ feelings.sentimiento_negativo }}</td>
+        <td>{{ feelings.sentimiento_neutro }}</td>
       </tr>
       {% endfor %}
     </tbody>
