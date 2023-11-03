@@ -1,4 +1,4 @@
-{% extends "index.html" %} {% block content %}
+{% extends "index.html" %} {% block content %} {% load static %}
 
 <div class="container mt-4">
 
@@ -16,7 +16,12 @@
     .texto {
       font-weight: unset;
     }
-    
+    .manual{
+      text-align: center;
+      display: block;
+      margin: 0 auto;
+      font-weight: bolder;
+    }
 
   </style>
 
@@ -31,8 +36,17 @@
   <p><b>Carnet:</b> 202211515</p>
   <p><b>Curso:</b> Laboratorio Introduccion a la Programacion y Computación</p>
   <p><b>Sección:</b> A</p>
+  <a href="https://drive.google.com/file/d/1xob5LobBmd6FqDfjemnw3F22EFcypxN9/view?usp=sharing"><b>Documentación</b></a>  
+</br>
 </div>
+<!-- <div class="manual">
+  
+  <iframe src="https://drive.google.com/file/d/1Y_" width="75%" height="500"></iframe>
+</div> -->
 
+<body>
+  <iframe src="https://drive.google.com/file/d/1xob5LobBmd6FqDfjemnw3F22EFcypxN9/view?usp=sharing" width="100%" height="500"></iframe>
+</body>
 
 
 

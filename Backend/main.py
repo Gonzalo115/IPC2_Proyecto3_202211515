@@ -372,6 +372,9 @@ def analizador(texto, LISTA_USR_MENCIONADOS_temp, LISTA_HASH_INCLUIDOS_temp, LIS
 @app.route('/search-by-date-hashtags/<fecha>', methods=['GET'])
 def search_by_hashtags(fecha):
 
+    if not os.path.exists(XML_Mensajes):
+        return None
+    
     fechas = fecha.split("-")
     diaI = fechas[2]
     mesI = fechas[1]
@@ -384,9 +387,6 @@ def search_by_hashtags(fecha):
     fecha_fin = datetime(int(anoF), int(mesF), int(diaF))
 
 
-    if not os.path.exists(XML_Mensajes):
-        return None
-    
     tree = ET.parse(XML_Mensajes)
     MENSAJES = tree.getroot()
 
@@ -491,6 +491,9 @@ def search_by_hashtags(fecha):
 @app.route('/search-by-date-mentions/<fecha>', methods=['GET'])
 def search_by_mentions(fecha):
 
+    if not os.path.exists(XML_Mensajes):
+        return None
+    
     fechas = fecha.split("-")
     diaI = fechas[2]
     mesI = fechas[1]
@@ -501,10 +504,6 @@ def search_by_mentions(fecha):
     mesF = fechas[4]
     anoF = fechas[3]
     fecha_fin = datetime(int(anoF), int(mesF), int(diaF))
-
-
-    if not os.path.exists(XML_Mensajes):
-        return None
     
     tree = ET.parse(XML_Mensajes)
     MENSAJES = tree.getroot()
@@ -604,67 +603,12 @@ def search_by_mentions(fecha):
 
 
 
-
-
-
-    # fechas = fecha.split("-")
-    # dia = fechas[2]
-    # mes = fechas[1]
-    # ano = fechas[0]
-    # fecha = f'{dia}-{mes}-{ano}'
-
-    # if not os.path.exists(XML_Mensajes):
-    #     return None
-
-    # # Cargar XML existente
-
-    # tree = ET.parse(XML_Mensajes)
-    # MENSAJES = tree.getroot()
-
-    # list_mensiones = []
-
-    # for data in tree.findall('MENSAJE'):
-    #     fecha_bd = data.find('FECHA').text
-    #     texto_bd = data.find('TEXTO').text
-    #     if fecha == fecha_bd:
-    #         LISTA_USR_MENCIONADOS_temp = []
-    #         LISTA_HASH_INCLUIDOS_temp = []
-    #         LISTA_Palabras_INCLUIDOS_temp = []
-    #         analizador(texto_bd, LISTA_USR_MENCIONADOS_temp, LISTA_HASH_INCLUIDOS_temp, LISTA_Palabras_INCLUIDOS_temp)
-    #         for user in LISTA_USR_MENCIONADOS_temp:
-    #             list_mensiones.append(user)
-
-
-    # result_list = []
-    # elementos_procesados = set()
-
-    # for i in range(len(list_mensiones)):
-    #     no_mensiones = 1
-    #     mension1 = list_mensiones[i]
-    #     if mension1 not in elementos_procesados:
-    #         for j in range(i + 1, len(list_mensiones)):
-    #             mension2 = list_mensiones[j]
-    #             if mension2 not in elementos_procesados:
-    #                 if mension1 == mension2:
-    #                     no_mensiones += 1
-    #                     elementos_procesados.add(mension2)
-    #         elementos_procesados.add(mension1)
-
-    #         obj = {
-    #             'fecha': fecha,
-    #             'mension': mension1,
-    #             'numero': no_mensiones,
-    #         }
-
-    #         # Usamos el alias como clave
-    #         result_list.append(obj)
-
-    # return jsonify(result_list)
-
-
 @app.route('/search-by-date-feelings/<fecha>', methods=['GET'])
 def search_by_feelings(fecha):
 
+    if not os.path.exists(XML_Mensajes):
+        return None
+    
     fechas = fecha.split("-")
     diaI = fechas[2]
     mesI = fechas[1]
@@ -676,9 +620,6 @@ def search_by_feelings(fecha):
     mesF = fechas[4]
     anoF = fechas[3]
     fecha_fin = datetime(int(anoF), int(mesF), int(diaF))
-
-    if not os.path.exists(XML_Mensajes):
-        return None
     
     tree = ET.parse(XML_Mensajes)
     MENSAJES = tree.getroot()
@@ -791,6 +732,32 @@ def search_by_feelings(fecha):
 
     return jsonify(result_list)
 
+@app.route('/inicializar', methods=['GET'])
+def inicializar():
+
+
+    if os.path.exists(XML_Palabras):
+        os.remove(XML_Palabras)
+
+
+    archivo = open(XML_Palabras, "w")
+    archivo.write("<diccionario><sentimientos_positivos></sentimientos_positivos><sentimientos_negativos></sentimientos_negativos></diccionario>")
+
+
+
+    if os.path.exists(XML_Mensajes):
+        os.remove(XML_Mensajes)
+
+    
+    archivo2 = open(XML_Mensajes, "w")
+    archivo2.write("<MENSAJES></MENSAJES>")
+
+
+    data = {'message': 'Se han receteados los datos'}
+    return jsonify(data) 
+
+
+
 
 
 
@@ -798,7 +765,8 @@ def search_by_feelings(fecha):
 def search_by_vacio():
     if not os.path.exists(XML_Mensajes):
         return None
-    return None
+    data = {'message': 'No se a ingresado un rango de fecha'}
+    return jsonify(data) 
 
 if __name__ == '__main__':
     app.run(debug=True)

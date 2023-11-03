@@ -16,6 +16,8 @@ def index(request):
     return render(request, "index.html")
 
 def inicializar(request):
+    requests.get(url + "/inicializar")
+
     return render(request, "inicializar.html")
 
 def help(request):
@@ -78,7 +80,7 @@ def listhast(request):
     }
 
     # Comprobar si hay una búsqueda
-    if query:
+    if query1 and query2:
         # Si hay un término de búsqueda, buscar por alias
         response = requests.get(url + f"/search-by-date-hashtags/{query}")
     else:
@@ -105,7 +107,7 @@ def listmension(request):
     }
 
     # Comprobar si hay una búsqueda
-    if query:
+    if query1 and query2:
         # Si hay un término de búsqueda, buscar por alias
         response = requests.get(url + f"/search-by-date-mentions/{query}")
     else:
@@ -133,7 +135,7 @@ def listfeelings(request):
     }
 
     # Comprobar si hay una búsqueda
-    if query:
+    if query1 and query2:
         # Si hay un término de búsqueda, buscar por alias
         response = requests.get(url + f"/search-by-date-feelings/{query}")
     else:
@@ -155,7 +157,6 @@ def palabra(request):
         xml_file = request.FILES.get('xmlFile')  # Obtener el archivo XML cargado
         if xml_file:
             content = xml_file.read().decode('utf-8')  # Leer y decodificar el contenido del archivo
-            print(content)
             # Hacer petición a la API
             api_url = url + "/processWords"
             headers = {
