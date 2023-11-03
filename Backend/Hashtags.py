@@ -1,4 +1,4 @@
 class Hashtags():
-    def __init__(self, nombre, no) -> None:
-        self.nombre = nombre
-        self.no = no
+    def __init__(self, fecha, hashtags) -> None:
+        self.fecha = fecha
+        self.hashtags = hashtags

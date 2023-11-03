@@ -1,26 +1,18 @@
 <MENSAJES>
     <MENSAJE>
         <FECHA>15-01-2023</FECHA>
-        <TEXTO>bienvenido a usac @estudiante01 @estudiante02, es un gusto que seas #hola# #hola# parte de esta institución #bienvenidausac# @estudiante03</TEXTO>
-    </MENSAJE>
-    <MENSAJE>
-        <FECHA>15-01-2023</FECHA>
-        <TEXTO>bienvenido a usac @estudiante01 @estudiante02, #adios# es un gusto que seas #hola# parte de esta institución #bienvenidausac#</TEXTO>
-    </MENSAJE>
-    <MENSAJE>
-        <FECHA>17-01-2023</FECHA>
-        <TEXTO>pésimo</TEXTO>
-    </MENSAJE>
-    <MENSAJE>
-        <FECHA>15-01-2024</FECHA>
-        <TEXTO>bienvenido a usac @estudiante01 @estudiante02, #adios# es un gusto que seas #hola# parte de esta institución #bienvenidausac#</TEXTO>
-    </MENSAJE>
-    <MENSAJE>
-        <FECHA>15-01-2023</FECHA>
         <TEXTO>bienvenido a usac @estudiante01 @estudiante02, es un gusto que seas parte de esta institución #bienvenidausac#</TEXTO>
     </MENSAJE>
     <MENSAJE>
+        <FECHA>16-01-2023</FECHA>
+        <TEXTO>bienvenido a usac @estudiante01 @estudiante02, es un gusto que seas parte de esta institución #hola#</TEXTO>
+    </MENSAJE>
+    <MENSAJE>
         <FECHA>15-01-2023</FECHA>
-        <TEXTO>bueno</TEXTO>
+        <TEXTO>bienvenido a usac @estudiante01 @estudiante02, es #bienvenidausac# un gusto que seas parte #adios# de esta institución #hola#</TEXTO>
+    </MENSAJE>
+    <MENSAJE>
+        <FECHA>20-01-2024</FECHA>
+        <TEXTO>bienvenido a usac @estudiante01 @estudiante02, es un gusto que seas parte de esta #FFFFFF# institución #bienvenidausac#</TEXTO>
     </MENSAJE>
 </MENSAJES>

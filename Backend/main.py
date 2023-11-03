@@ -5,6 +5,9 @@ import os
 import xml.dom.minidom
 from fechastem import fechastem
 from Sentimiento import Sentimiento
+from Hashtags import Hashtags
+from Menciones import Menciones
+
 from datetime import datetime
 from collections import defaultdict
 
@@ -210,10 +213,7 @@ def process_xml2():
 
 
     elementos_procesados = set()
-
     FechasAgrupadas = []
-
-
     for i in range(len(Fechas)):
         fencha1 = Fechas[i]
 
@@ -373,116 +373,293 @@ def analizador(texto, LISTA_USR_MENCIONADOS_temp, LISTA_HASH_INCLUIDOS_temp, LIS
 def search_by_hashtags(fecha):
 
     fechas = fecha.split("-")
-    dia = fechas[2]
-    mes = fechas[1]
-    ano = fechas[0]
-    fecha = f'{dia}-{mes}-{ano}'
+    diaI = fechas[2]
+    mesI = fechas[1]
+    anoI = fechas[0]
+    fecha_inicio = datetime(int(anoI), int(mesI), int(diaI))
+
+    diaF = fechas[5]
+    mesF = fechas[4]
+    anoF = fechas[3]
+    fecha_fin = datetime(int(anoF), int(mesF), int(diaF))
+
 
     if not os.path.exists(XML_Mensajes):
         return None
-
-    # Cargar XML existente
-
+    
     tree = ET.parse(XML_Mensajes)
     MENSAJES = tree.getroot()
 
-    list_Hashtags = []
+    treeP = ET.parse(XML_Palabras)
+    diccionario = treeP.getroot()
+
+
+    fechas_en_rango = []
 
     for data in tree.findall('MENSAJE'):
         fecha_bd = data.find('FECHA').text
         texto_bd = data.find('TEXTO').text
-        if fecha == fecha_bd:
+        fechas_bd = fecha_bd.split("-")
+        dia_bd = fechas_bd[0]
+        mes_bd = fechas_bd[1]
+        ano_bd = fechas_bd[2]
+        fecha_bd_evaluar = datetime(int(ano_bd), int(mes_bd), int(dia_bd))
+        if fecha_inicio <= fecha_bd_evaluar <= fecha_fin:
             LISTA_USR_MENCIONADOS_temp = []
-            LISTA_HASH_INCLUIDOS_temp = []
-            LISTA_Palabras_INCLUIDOS_temp = []
+            LISTA_HASH_INCLUIDOS_temp = [] #Este nos interesa...
+            LISTA_Palabras_INCLUIDOS_temp = [] 
             analizador(texto_bd, LISTA_USR_MENCIONADOS_temp, LISTA_HASH_INCLUIDOS_temp, LISTA_Palabras_INCLUIDOS_temp)
-            for hash in LISTA_HASH_INCLUIDOS_temp:
-                list_Hashtags.append(hash)
+            fechas_en_rango.append(Hashtags(fecha_bd, LISTA_HASH_INCLUIDOS_temp))
+    
+
+
 
 
     result_list = []
     elementos_procesados = set()
 
-    for i in range(len(list_Hashtags)):
-        no_hashtag = 1
-        hashtag1 = list_Hashtags[i]
-        if hashtag1 not in elementos_procesados:
-            for j in range(i + 1, len(list_Hashtags)):
-                hashtag2 = list_Hashtags[j]
-                if hashtag2 not in elementos_procesados:
-                    if hashtag1 == hashtag2:
-                        no_hashtag += 1
-                        elementos_procesados.add(hashtag2)
-            elementos_procesados.add(hashtag1)
+    for i in range(len(fechas_en_rango)):
+        x = 0
+        fecha1 = fechas_en_rango[i]
+        if fecha1 not in elementos_procesados:
+            for j in range(i + 1, len(fechas_en_rango)):
+                fecha2 = fechas_en_rango[j]
+                if fecha2 not in elementos_procesados:
+                    if fecha1.fecha == fecha2.fecha:
+                        x += 1
+                        list_hashtags = []
 
-            obj = {
-                'fecha': fecha,
-                'hashtags': hashtag1,
-                'numero': no_hashtag,
-            }
+                        for a in fecha1.hashtags:
+                            list_hashtags.append(a)
 
-            # Usamos el alias como clave
-            result_list.append(obj)
+                        for a in fecha2.hashtags:
+                            list_hashtags.append(a)
+
+                        elementos_procesados_2 = set()
+
+                        for i in range(len(list_hashtags)):
+                            no_hashtag = 1
+                            hashtag1 = list_hashtags[i]
+                            if hashtag1 not in elementos_procesados_2:
+                                for j in range(i + 1, len(list_hashtags)):
+                                    hashtag2 = list_hashtags[j]
+                                    if hashtag2 not in elementos_procesados_2:
+                                        if hashtag1 == hashtag2:
+                                            no_hashtag += 1
+                                            elementos_procesados_2.add(hashtag2)
+                                elementos_procesados_2.add(hashtag1)
+
+                                obj = {
+                                    'fecha': fecha1.fecha,  # Acceder a la propiedad 'fecha' del objeto Hashtags
+                                    'hashtags': hashtag1,
+                                    'numero': no_hashtag,
+                                }
+
+                                # Usamos el alias como clave
+                                result_list.append(obj)
+                        elementos_procesados.add(fecha2)
+
+            if x == 0:
+                elementos_procesados_2 = set()
+                for i in range(len(fecha1.hashtags)):
+                    no_hashtag = 1
+                    hashtag1 = fecha1.hashtags[i]
+                    if hashtag1 not in elementos_procesados_2:
+                        for j in range(i + 1, len(fecha1.hashtags)):
+                            hashtag2 = fecha1.hashtags[j]
+                            if hashtag2 not in elementos_procesados_2:
+                                if hashtag1 == hashtag2:
+                                    no_hashtag += 1
+                                    elementos_procesados_2.add(hashtag2)
+                        elementos_procesados_2.add(hashtag1)
+
+                        obj = {
+                            'fecha': fecha1.fecha,  # Acceder a la propiedad 'fecha' del objeto Hashtags
+                            'hashtags': hashtag1,
+                            'numero': no_hashtag,
+                        }
+
+                        # Usamos el alias como clave
+                        result_list.append(obj)
+                elementos_procesados.add(fecha1)
 
     return jsonify(result_list)
+
 
 
 
 @app.route('/search-by-date-mentions/<fecha>', methods=['GET'])
 def search_by_mentions(fecha):
+
     fechas = fecha.split("-")
-    dia = fechas[2]
-    mes = fechas[1]
-    ano = fechas[0]
-    fecha = f'{dia}-{mes}-{ano}'
+    diaI = fechas[2]
+    mesI = fechas[1]
+    anoI = fechas[0]
+    fecha_inicio = datetime(int(anoI), int(mesI), int(diaI))
+
+    diaF = fechas[5]
+    mesF = fechas[4]
+    anoF = fechas[3]
+    fecha_fin = datetime(int(anoF), int(mesF), int(diaF))
+
 
     if not os.path.exists(XML_Mensajes):
         return None
-
-    # Cargar XML existente
-
+    
     tree = ET.parse(XML_Mensajes)
     MENSAJES = tree.getroot()
 
-    list_mensiones = []
+    treeP = ET.parse(XML_Palabras)
+    diccionario = treeP.getroot()
+
+
+    fechas_en_rango = []
 
     for data in tree.findall('MENSAJE'):
         fecha_bd = data.find('FECHA').text
         texto_bd = data.find('TEXTO').text
-        if fecha == fecha_bd:
-            LISTA_USR_MENCIONADOS_temp = []
-            LISTA_HASH_INCLUIDOS_temp = []
-            LISTA_Palabras_INCLUIDOS_temp = []
+        fechas_bd = fecha_bd.split("-")
+        dia_bd = fechas_bd[0]
+        mes_bd = fechas_bd[1]
+        ano_bd = fechas_bd[2]
+        fecha_bd_evaluar = datetime(int(ano_bd), int(mes_bd), int(dia_bd))
+        if fecha_inicio <= fecha_bd_evaluar <= fecha_fin:
+            LISTA_USR_MENCIONADOS_temp = [] #Este nos interesa...
+            LISTA_HASH_INCLUIDOS_temp = [] 
+            LISTA_Palabras_INCLUIDOS_temp = [] 
             analizador(texto_bd, LISTA_USR_MENCIONADOS_temp, LISTA_HASH_INCLUIDOS_temp, LISTA_Palabras_INCLUIDOS_temp)
-            for user in LISTA_USR_MENCIONADOS_temp:
-                list_mensiones.append(user)
-
+            fechas_en_rango.append(Menciones(fecha_bd, LISTA_USR_MENCIONADOS_temp))
+    
 
     result_list = []
     elementos_procesados = set()
 
-    for i in range(len(list_mensiones)):
-        no_mensiones = 1
-        mension1 = list_mensiones[i]
-        if mension1 not in elementos_procesados:
-            for j in range(i + 1, len(list_mensiones)):
-                mension2 = list_mensiones[j]
-                if mension2 not in elementos_procesados:
-                    if mension1 == mension2:
-                        no_mensiones += 1
-                        elementos_procesados.add(mension2)
-            elementos_procesados.add(mension1)
+    for i in range(len(fechas_en_rango)):
+        x = 0
+        fecha1 = fechas_en_rango[i]
+        if fecha1 not in elementos_procesados:
+            for j in range(i + 1, len(fechas_en_rango)):
+                fecha2 = fechas_en_rango[j]
+                if fecha2 not in elementos_procesados:
+                    if fecha1.fecha == fecha2.fecha:
+                        x += 1
+                        list_mensiones = []
 
-            obj = {
-                'fecha': fecha,
-                'mension': mension1,
-                'numero': no_mensiones,
-            }
+                        for a in fecha1.menciones:
+                            list_mensiones.append(a)
 
-            # Usamos el alias como clave
-            result_list.append(obj)
+                        for a in fecha2.menciones:
+                            list_mensiones.append(a)
+
+                        elementos_procesados_2 = set()
+
+                        for i in range(len(list_mensiones)):
+                            no_mencions = 1
+                            mencion1 = list_mensiones[i]
+                            if mencion1 not in elementos_procesados_2:
+                                for j in range(i + 1, len(list_mensiones)):
+                                    mencion2 = list_mensiones[j]
+                                    if mencion2 not in elementos_procesados_2:
+                                        if mencion1 == mencion2:
+                                            no_mencions += 1
+                                            elementos_procesados_2.add(mencion2)
+                                elementos_procesados_2.add(mencion1)
+
+                                obj = {
+                                    'fecha': fecha1.fecha,  # Acceder a la propiedad 'fecha' del objeto menciones
+                                    'mension': mencion1,
+                                    'numero': no_mencions,
+                                }
+
+                                # Usamos el alias como clave
+                                result_list.append(obj)
+                        elementos_procesados.add(fecha2)
+
+            if x == 0:
+                elementos_procesados_2 = set()
+                for i in range(len(fecha1.menciones)):
+                    no_mencions = 1
+                    mencion1 = fecha1.menciones[i]
+                    if mencion1 not in elementos_procesados_2:
+                        for j in range(i + 1, len(fecha1.menciones)):
+                            mencion2 = fecha1.menciones[j]
+                            if mencion2 not in elementos_procesados_2:
+                                if mencion1 == mencion2:
+                                    no_mencions += 1
+                                    elementos_procesados_2.add(mencion2)
+                        elementos_procesados_2.add(mencion1)
+
+                        obj = {
+                            'fecha': fecha1.fecha,  # Acceder a la propiedad 'fecha' del objeto menciones
+                            'mension': mencion1,
+                            'numero': no_mencions,
+                        }
+
+                        # Usamos el alias como clave
+                        result_list.append(obj)
+                elementos_procesados.add(fecha1)
 
     return jsonify(result_list)
+
+
+
+
+
+
+
+    # fechas = fecha.split("-")
+    # dia = fechas[2]
+    # mes = fechas[1]
+    # ano = fechas[0]
+    # fecha = f'{dia}-{mes}-{ano}'
+
+    # if not os.path.exists(XML_Mensajes):
+    #     return None
+
+    # # Cargar XML existente
+
+    # tree = ET.parse(XML_Mensajes)
+    # MENSAJES = tree.getroot()
+
+    # list_mensiones = []
+
+    # for data in tree.findall('MENSAJE'):
+    #     fecha_bd = data.find('FECHA').text
+    #     texto_bd = data.find('TEXTO').text
+    #     if fecha == fecha_bd:
+    #         LISTA_USR_MENCIONADOS_temp = []
+    #         LISTA_HASH_INCLUIDOS_temp = []
+    #         LISTA_Palabras_INCLUIDOS_temp = []
+    #         analizador(texto_bd, LISTA_USR_MENCIONADOS_temp, LISTA_HASH_INCLUIDOS_temp, LISTA_Palabras_INCLUIDOS_temp)
+    #         for user in LISTA_USR_MENCIONADOS_temp:
+    #             list_mensiones.append(user)
+
+
+    # result_list = []
+    # elementos_procesados = set()
+
+    # for i in range(len(list_mensiones)):
+    #     no_mensiones = 1
+    #     mension1 = list_mensiones[i]
+    #     if mension1 not in elementos_procesados:
+    #         for j in range(i + 1, len(list_mensiones)):
+    #             mension2 = list_mensiones[j]
+    #             if mension2 not in elementos_procesados:
+    #                 if mension1 == mension2:
+    #                     no_mensiones += 1
+    #                     elementos_procesados.add(mension2)
+    #         elementos_procesados.add(mension1)
+
+    #         obj = {
+    #             'fecha': fecha,
+    #             'mension': mension1,
+    #             'numero': no_mensiones,
+    #         }
+
+    #         # Usamos el alias como clave
+    #         result_list.append(obj)
+
+    # return jsonify(result_list)
 
 
 @app.route('/search-by-date-feelings/<fecha>', methods=['GET'])

@@ -15,6 +15,9 @@ url = "http://localhost:5000"
 def index(request):
     return render(request, "index.html")
 
+def inicializar(request):
+    return render(request, "inicializar.html")
+
 def help(request):
     return render(request, "help.html")
 
@@ -66,8 +69,9 @@ def stats(request):
 
 
 def listhast(request):
-    query = request.GET.get('inputSearch')
-    print(query)
+    query1 = request.GET.get('inputSearch')
+    query2 = request.GET.get('inputSearch2')
+    query = f'{query1}-{query2}'
     contexto = {
         'hashtags': [],
         'query': query
@@ -91,7 +95,10 @@ def listhast(request):
 
 
 def listmension(request):
-    query = request.GET.get('inputSearch')
+    query1 = request.GET.get('inputSearch')
+    query2 = request.GET.get('inputSearch2')
+    query = f'{query1}-{query2}'
+
     contexto = {
         'hashtags': [],
         'query': query

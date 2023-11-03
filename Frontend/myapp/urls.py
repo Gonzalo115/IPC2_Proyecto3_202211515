@@ -11,4 +11,5 @@ urlpatterns = [
     path('stats/', views.stats, name="stats"),
     path('palabra/', views.palabra, name="palabra"),
     path('mensaje/', views.mensaje, name="mensaje"),
+    path('inicializar/', views.inicializar, name="inicializar"),
 ]
